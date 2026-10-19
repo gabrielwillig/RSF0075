@@ -81,13 +81,13 @@ def render_graph(
     if fig.canvas.manager:
         fig.canvas.manager.set_window_title("Wireless Network Topology Viewer")
 
-    nx.draw_networkx_nodes(
-        graph, layout, node_color="#90CAF9", node_size=700, edgecolors="#1565C0"
-    )
-    nx.draw_networkx_labels(
-        graph, layout, font_size=10, font_family="sans-serif", font_weight="bold"
-    )
     nx.draw_networkx_edges(graph, layout, edge_color="#B0BEC5", width=1.8)
+
+    if path and len(path) > 1:
+        path_edges = list(zip(path[:-1], path[1:]))
+        nx.draw_networkx_edges(
+            graph, layout, edgelist=path_edges, edge_color="#D84315", width=3.5
+        )
 
     edge_labels = nx.get_edge_attributes(graph, "weight")
     formatted_labels = {
@@ -95,23 +95,27 @@ def render_graph(
         for edge, w in edge_labels.items()
     }
     nx.draw_networkx_edge_labels(
-        graph, layout, edge_labels=formatted_labels, font_size=9
+        graph,
+        layout,
+        edge_labels=formatted_labels,
+        font_size=9,
+        bbox=dict(alpha=0),
+    )
+
+    nx.draw_networkx_nodes(
+        graph, layout, node_color="#90CAF9", node_size=700, edgecolors="#1565C0"
     )
 
     if path:
+        nx.draw_networkx_nodes(
+            graph,
+            layout,
+            nodelist=path,
+            node_color="#FF8A65",
+            node_size=800,
+            edgecolors="#D84315",
+        )
         if len(path) > 1:
-            path_edges = list(zip(path[:-1], path[1:]))
-            nx.draw_networkx_nodes(
-                graph,
-                layout,
-                nodelist=path,
-                node_color="#FF8A65",
-                node_size=800,
-                edgecolors="#D84315",
-            )
-            nx.draw_networkx_edges(
-                graph, layout, edgelist=path_edges, edge_color="#D84315", width=3.5
-            )
             cost_str = f" (Cost: {cost:g})" if cost is not None else ""
             plt.title(
                 f"Shortest Path: {' -> '.join(path)}{cost_str}",
@@ -119,14 +123,6 @@ def render_graph(
                 fontweight="bold",
             )
         else:
-            nx.draw_networkx_nodes(
-                graph,
-                layout,
-                nodelist=path,
-                node_color="#FF8A65",
-                node_size=800,
-                edgecolors="#D84315",
-            )
             plt.title(
                 f"Same Source and Destination: Node {path[0]} (Cost: 0)",
                 fontsize=12,
@@ -134,6 +130,10 @@ def render_graph(
             )
     else:
         plt.title("Input Topology", fontsize=12, fontweight="bold")
+
+    nx.draw_networkx_labels(
+        graph, layout, font_size=10, font_family="sans-serif", font_weight="bold"
+    )
 
     plt.axis("off")
     plt.tight_layout()
